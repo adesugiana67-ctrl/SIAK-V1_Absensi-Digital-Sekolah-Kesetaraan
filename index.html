@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard Absensi - PKBM IGI Sumedang</title>
+  <!-- Favicon SVG Branding -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23059669%22/><text x=%2250%22 y=%2265%22 font-size=%2250%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22sans-serif%22 font-weight=%22bold%22>IGI</text></svg>">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --primary: #1e3a8a; /* Biru Tua Institusi */
+      --primary-light: #3b82f6;
+      --igi-green: #059669; /* Hijau IGI */
+      --igi-green-light: #10b981;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --radius: 12px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text-main); line-height: 1.5; }
+
+    /* Header */
+    .header { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; }
+    .header h1 { font-size: 1.25rem; font-weight: 800; letter-spacing: 0.5px; display: flex; align-items: center; gap: 10px; }
+    .header h1 span { background: var(--igi-green); padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; }
+    .status-badge { font-size: 0.8rem; background: rgba(255,255,255,0.15); padding: 6px 12px; border-radius: 20px; display: flex; align-items: center; gap: 6px; }
+    .pulse { width: 8px; height: 8px; background: #34d399; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(52, 211, 153, 0); } 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); } }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    /* Cards */
+    .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+    .card { background: var(--card); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); }
+    .card-label { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .card-value { font-size: 2rem; font-weight: 800; color: var(--primary); }
+    .card-value.green { color: var(--igi-green); }
+    .card-value.red { color: #ef4444; }
+    .card-value.yellow { color: #f59e0b; }
+
+    /* Sections */
+    .section { background: var(--card); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); margin-bottom: 2rem; }
+    .section-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; color: var(--primary); }
+
+    /* Form */
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
+    input, select, textarea { padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.95rem; transition: all 0.2s; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+    
+    .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; font-size: 0.9rem; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: #1e40af; }
+    .btn-success { background: var(--igi-green); color: white; }
+    .btn-success:hover { background: #047857; }
+    .btn-danger { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+    .btn-danger:hover { background: #fecaca; }
+    .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: #f1f5f9; }
+    .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+    .form-actions { margin-top: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+
+    /* Table */
+    .table-toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 800px; }
+    th { background: #f8fafc; text-align: left; padding: 1rem; font-weight: 700; color: var(--text-muted); border-bottom: 2px solid var(--border); font-size: 0.8rem; text-transform: uppercase; }
+    td { padding: 1rem; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8fafc; }
+
+    .badge { padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
+    .badge-hadir { background: #dcfce7; color: #166534; }
+    .badge-izin { background: #fef3c7; color: #92400e; }
+    .badge-sakit { background: #dbeafe; color: #1e40af; }
+    .badge-alpa { background: #fee2e2; color: #991b1b; }
+
+    .empty-state { text-align: center; padding: 3rem; color: var(--text-muted); }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--primary); color: white; padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2); transform: translateY(100px); opacity: 0; transition: 0.3s; z-index: 1000; display: flex; align-items: center; gap: 10px; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* Print Specific */
+    .print-kop { display: none; }
+
+    @media print {
+      body { background: white; }
+      .header, .form-actions, .btn, .toast, .table-toolbar .btn, .col-aksi, th.col-aksi, .section:not(.table-section) { display: none !important; }
+      .container { padding: 0; max-width: 100%; }
+      .section.table-section { box-shadow: none; border: none; padding: 0; }
+      .print-kop { display: block !important; text-align: center; margin-bottom: 20px; border-bottom: 3px double black; padding-bottom: 10px; }
+      .print-kop h2 { margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 2px; }
+      .print-kop h1 { margin: 5px 0; font-size: 18px; text-transform: uppercase; }
+      .print-kop p { margin: 0; font-size: 11px; color: #333; }
+      .table-wrap { border: 1px solid black; }
+      th, td { border: 1px solid black; padding: 8px; font-size: 11px; }
+      .badge { border: 1px solid black; background: none !important; color: black !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <h1><span>IGI</span> PKBM IGI SUMEDANG SIAK V.1_Absensi Digital</h1>
+    <div class="status-badge"><div class="pulse"></div> Sistem Tersimpan Lokal (Offline Ready)</div>
+  </header>
+
+  <main class="container">
+    <!-- KOP SURAT (Hanya muncul saat Print) -->
+    <div class="print-kop">
+      <h2>Yayasan Pendidikan Lingga Insun Sugih</h2>
+      <h1>PKBM IGI SUMEDANG</h1>
+      <p>Komplek Dago Village F2 Desa Sukajaya Kec. Sumedang Selatan, Sumedang, Jawa Barat 45311 | Telp: (0261) 202xxx</p>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid-4">
+      <div class="card">
+        <div class="card-label">Total Data Tersimpan</div>
+        <div class="card-value" id="statTotal">0</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Hadir Hari Ini</div>
+        <div class="card-value green" id="statHadir">0</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Izin / Sakit Hari Ini</div>
+        <div class="card-value yellow" id="statIzinSakit">0</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Alpa Hari Ini</div>
+        <div class="card-value red" id="statAlpa">0</div>
+      </div>
+    </div>
+
+    <!-- Grafik (Visualisasi Statis Tren) -->
+    <div class="section">
+      <div class="section-title"><i class="fa-solid fa-chart-line"></i> Tren Kehadiran Mingguan (Visualisasi)</div>
+      <div style="height: 250px;">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Form Input -->
+    <div class="section">
+      <div class="section-title"><i class="fa-solid fa-user-plus"></i> Input Absensi Baru</div>
+      <form id="absensiForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nama Siswa *</label>
+            <input type="text" id="inpNama" required placeholder="Nama Lengkap">
+          </div>
+          <div class="form-group">
+            <label>Program *</label>
+            <select id="inpProgram" required>
+              <option value="">Pilih Program</option>
+              <option value="Paket A">Paket A</option>
+              <option value="Paket B">Paket B</option>
+              <option value="Paket C">Paket C</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Mata Pelajaran</label>
+            <input type="text" id="inpMapel" placeholder="Opsional">
+          </div>
+          <div class="form-group">
+            <label>Tanggal *</label>
+            <input type="date" id="inpTanggal" required>
+          </div>
+          <div class="form-group">
+            <label>Status *</label>
+            <select id="inpStatus" required>
+              <option value="">Pilih Status</option>
+              <option value="Hadir">Hadir</option>
+              <option value="Izin">Izin</option>
+              <option value="Sakit">Sakit</option>
+              <option value="Alpa">Alpa</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Catatan</label>
+            <textarea id="inpCatatan" rows="2" placeholder="Keterangan tambahan..."></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Simpan Data</button>
+          <button type="reset" class="btn btn-ghost">Reset Form</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Tabel Riwayat -->
+    <div class="section table-section">
+      <div class="table-toolbar">
+        <div class="section-title" style="margin:0"><i class="fa-solid fa-database"></i> Riwayat Absensi (localStorage)</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-success btn-sm" id="btnExport"><i class="fa-solid fa-file-csv"></i> Ekspor CSV</button>
+          <button class="btn btn-ghost btn-sm" id="btnPrint"><i class="fa-solid fa-print"></i> Cetak PDF</button>
+          <button class="btn btn-danger btn-sm" id="btnClearAll"><i class="fa-solid fa-trash"></i> Hapus Semua</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40px">No</th>
+              <th>Tanggal</th>
+              <th>Nama Siswa</th>
+              <th>Program</th>
+              <th>Mapel</th>
+              <th>Status</th>
+              <th>Catatan</th>
+              <th class="col-aksi" style="width:80px">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <!-- Diisi oleh JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i> <span id="toastMsg">Berhasil!</span></div>
+
+  <script>
+    // ==============================
+    // KONFIGURASI & STATE
+    // ==============================
+    const STORAGE_KEY = 'pkbm_igi_absensi_data';
+    
+    // Set default tanggal hari ini
+    document.getElementById('inpTanggal').valueAsDate = new Date();
+
+    // ==============================
+    // FUNGSI UTAMA LOCALSTORAGE
+    // ==============================
+    function getData() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    }
+
+    function saveData(data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    // ==============================
+    // RENDER UI
+    // ==============================
+    function renderAll() {
+      const data = getData();
+      renderTable(data);
+      updateStats(data);
+    }
+
+    function renderTable(data) {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="empty-state"><i class="fa-regular fa-folder-open" style="font-size:2rem; display:block; margin-bottom:10px;"></i>Belum ada data tersimpan.</td></tr>`;
+        return;
+      }
+
+      // Urutkan dari yang terbaru
+      const sorted = [...data].sort((a, b) => b.timestamp - a.timestamp);
+
+      sorted.forEach((row, index) => {
+        const tr = document.createElement('tr');
+        const badgeClass = `badge-${row.status.toLowerCase()}`;
+        const formattedDate = new Date(row.tanggal).toLocaleDateString('id-ID', {day: '2-digit', month: 'short', year: 'numeric'});
+        
+        tr.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${formattedDate}</td>
+          <td><strong>${escapeHtml(row.nama)}</strong></td>
+          <td>${escapeHtml(row.program)}</td>
+          <td>${escapeHtml(row.mapel || '-')}</td>
+          <td><span class="badge ${badgeClass}">${row.status}</span></td>
+          <td>${escapeHtml(row.catatan || '-')}</td>
+          <td class="col-aksi"><button class="btn btn-danger btn-sm" onclick="deleteRecord('${row.id}')"><i class="fa-solid fa-trash"></i></button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function updateStats(data) {
+      const today = new Date().toISOString().split('T')[0];
+      const todayData = data.filter(d => d.tanggal === today);
+
+      document.getElementById('statTotal').textContent = data.length;
+      document.getElementById('statHadir').textContent = todayData.filter(d => d.status === 'Hadir').length;
+      
+      const izinSakit = todayData.filter(d => d.status === 'Izin' || d.status === 'Sakit').length;
+      document.getElementById('statIzinSakit').textContent = izinSakit;
+      
+      document.getElementById('statAlpa').textContent = todayData.filter(d => d.status === 'Alpa').length;
+    }
+
+    // ==============================
+    // EVENT LISTENERS
+    // ==============================
+    document.getElementById('absensiForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const data = getData();
+      
+      const newRecord = {
+        id: Date.now().toString(36) + Math.random().toString(36).substr(2),
+        nama: document.getElementById('inpNama').value.trim(),
+        program: document.getElementById('inpProgram').value,
+        mapel: document.getElementById('inpMapel').value.trim(),
+        tanggal: document.getElementById('inpTanggal').value,
+        status: document.getElementById('inpStatus').value,
+        catatan: document.getElementById('inpCatatan').value.trim(),
+        timestamp: Date.now()
+      };
+
+      data.push(newRecord);
+      saveData(data);
+      renderAll();
+      this.reset();
+      document.getElementById('inpTanggal').valueAsDate = new Date(); // Reset tanggal ke hari ini
+      showToast('Data absensi berhasil disimpan ke memori lokal!');
+    });
+
+    window.deleteRecord = function(id) {
+      if(!confirm('Yakin ingin menghapus data ini?')) return;
+      let data = getData();
+      data = data.filter(d => d.id !== id);
+      saveData(data);
+      renderAll();
+      showToast('Data berhasil dihapus.');
+    }
+
+    document.getElementById('btnClearAll').addEventListener('click', function() {
+      if(!confirm('PERINGATAN: Semua data absensi akan dihapus permanen dari browser ini. Lanjutkan?')) return;
+      localStorage.removeItem(STORAGE_KEY);
+      renderAll();
+      showToast('Semua riwayat telah dikosongkan.');
+    });
+
+    document.getElementById('btnPrint').addEventListener('click', () => window.print());
+
+    document.getElementById('btnExport').addEventListener('click', function() {
+      const data = getData();
+      if(data.length === 0) return showToast('Tidak ada data untuk diekspor.');
+
+      let csv = 'No,Tanggal,Nama Siswa,Program,Mata Pelajaran,Status,Catatan\n';
+      data.forEach((row, i) => {
+        csv += `${i+1},"${row.tanggal}","${row.nama}","${row.program}","${row.mapel || '-'}","${row.status}","${row.catatan || '-'}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `Absensi_PKBM_IGI_${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+      showToast('File CSV berhasil diunduh!');
+    });
+
+    // ==============================
+    // UTILITAS
+    // ==============================
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      document.getElementById('toastMsg').textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // ==============================
+    // INISIALISASI SAAT LOAD
+    // ==============================
+    renderAll();
+
+    // Chart.js Inisialisasi
+    new Chart(document.getElementById('trendChart'), {
+      type: 'line',
+      data: {
+        labels: ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4'],
+        datasets: [{
+          label: 'Rata-rata Kehadiran',
+          data: [85, 88, 82, 90],
+          borderColor: '#059669',
+          backgroundColor: 'rgba(5, 150, 105, 0.1)',
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+  </script>
+</body>
+</html>
