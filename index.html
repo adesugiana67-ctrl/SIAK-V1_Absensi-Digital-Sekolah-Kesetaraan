@@ -1,157 +1,431 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Absensi PKBM IGI Sumedang</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard Absensi - PKBM IGI Sumedang</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23059669%22/><text x=%2250%22 y=%2265%22 font-size=%2250%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22sans-serif%22 font-weight=%22bold%22>IGI</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<style>
-body{font-family:'Inter',sans-serif;margin:0;background:#f1f5f9}
-header{background:#1e3a8a;color:#fff;padding:15px 25px;display:flex;justify-content:space-between;align-items:center}
-button{padding:8px 15px;border:none;border-radius:6px;cursor:pointer;font-weight:600}
-.btn-primary{background:#1e3a8a;color:#fff}
-.btn-success{background:#059669;color:#fff}
-.btn-warning{background:#f59e0b;color:#fff}
-.btn-danger{background:#ef4444;color:#fff}
-.container{max-width:1200px;margin:auto;padding:20px}
-.card{background:#fff;padding:15px;border-radius:10px;box-shadow:0 4px 6px rgba(0,0,0,0.05);margin-bottom:20px}
-input,select{width:100%;padding:8px;border:1px solid #ccc;border-radius:6px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{padding:10px;border-bottom:1px solid #eee;text-align:left}
-.toast{position:fixed;bottom:20px;right:20px;background:#1e3a8a;color:#fff;padding:10px 15px;border-radius:6px;display:none}
-</style>
+  <style>
+    :root {
+      --primary: #1e3a8a; --primary-light: #3b82f6;
+      --igi-green: #059669; --igi-green-light: #10b981;
+      --bg: #f8fafc; --card: #ffffff; --border: #e2e8f0;
+      --text-main: #0f172a; --text-muted: #64748b;
+      --radius: 12px; --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text-main); line-height: 1.5; overflow-x: hidden; }
+
+    /* ================= MODAL PIN SECURITY ================= */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(8px); z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.3s;
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal-box {
+      background: white; padding: 2.5rem; border-radius: 16px; width: 90%; max-width: 380px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center;
+    }
+    .modal-box .lock-icon { font-size: 3rem; color: var(--primary); margin-bottom: 1rem; }
+    .modal-box h2 { margin-bottom: 0.5rem; color: var(--primary); }
+    .modal-box p { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+    .pin-input {
+      width: 100%; padding: 1rem; font-size: 1.5rem; letter-spacing: 1rem; text-align: center;
+      border: 2px solid var(--border); border-radius: 8px; margin-bottom: 1rem; font-weight: bold;
+    }
+    .pin-input:focus { outline: none; border-color: var(--primary-light); }
+    .pin-error { color: #ef4444; font-size: 0.85rem; font-weight: 600; height: 20px; margin-bottom: 1rem; }
+    .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+    @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+
+    /* ================= LAYOUT & HEADER ================= */
+    .header { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; }
+    .header h1 { font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+    .header h1 span { background: var(--igi-green); padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; }
+    .header-actions { display: flex; gap: 10px; align-items: center; }
+    .btn-lock { background: rgba(255,255,255,0.15); border: none; color: white; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
+    .btn-lock:hover { background: rgba(255,255,255,0.25); }
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    /* ================= CARDS & SECTIONS ================= */
+    .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+    .card { background: var(--card); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); }
+    .card-label { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .card-value { font-size: 2rem; font-weight: 800; color: var(--primary); }
+    .card-value.green { color: var(--igi-green); } .card-value.red { color: #ef4444; } .card-value.yellow { color: #f59e0b; }
+    .section { background: var(--card); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); margin-bottom: 2rem; }
+    .section-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; color: var(--primary); }
+
+    /* ================= FORM ================= */
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: 0.85rem; font-weight: 600; }
+    input, select, textarea { padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.95rem; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+    .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; font-size: 0.9rem; }
+    .btn-primary { background: var(--primary); color: white; } .btn-primary:hover { background: #1e40af; }
+    .btn-success { background: var(--igi-green); color: white; } .btn-success:hover { background: #047857; }
+    .btn-danger { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; } .btn-danger:hover { background: #fecaca; }
+    .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); } .btn-ghost:hover { background: #f1f5f9; }
+    .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+    .form-actions { margin-top: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+
+    /* ================= TABLE ================= */
+    .table-toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 800px; }
+    th { background: #f8fafc; text-align: left; padding: 1rem; font-weight: 700; color: var(--text-muted); border-bottom: 2px solid var(--border); font-size: 0.8rem; text-transform: uppercase; }
+    td { padding: 1rem; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; } tr:hover td { background: #f8fafc; }
+    .badge { padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
+    .badge-hadir { background: #dcfce7; color: #166534; } .badge-izin { background: #fef3c7; color: #92400e; }
+    .badge-sakit { background: #dbeafe; color: #1e40af; } .badge-alpa { background: #fee2e2; color: #991b1b; }
+    .empty-state { text-align: center; padding: 3rem; color: var(--text-muted); }
+
+    /* ================= TOAST ================= */
+    .toast { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2); transform: translateY(100px); opacity: 0; transition: 0.3s; z-index: 1000; display: flex; align-items: center; gap: 10px; color: white; font-weight: 600; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { background: var(--igi-green); }
+    .toast.error { background: #ef4444; }
+
+    /* ================= PRINT ================= */
+    .print-kop { display: none; }
+    @media print {
+      body { background: white; }
+      .modal-overlay, .header, .form-actions, .btn, .toast, .table-toolbar .btn, .col-aksi, th.col-aksi, .section:not(.table-section) { display: none !important; }
+      .container { padding: 0; max-width: 100%; }
+      .section.table-section { box-shadow: none; border: none; padding: 0; }
+      .print-kop { display: block !important; text-align: center; margin-bottom: 20px; border-bottom: 3px double black; padding-bottom: 10px; }
+      .print-kop h2 { margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 2px; }
+      .print-kop h1 { margin: 5px 0; font-size: 18px; text-transform: uppercase; }
+      .print-kop p { margin: 0; font-size: 11px; color: #333; }
+      .table-wrap { border: 1px solid black; }
+      th, td { border: 1px solid black; padding: 8px; font-size: 11px; }
+      .badge { border: 1px solid black; background: none !important; color: black !important; }
+    }
+  </style>
 </head>
 <body>
 
-<header>
-<h2>PKBM IGI SUMEDANG</h2>
-<div>
-<button class="btn-success" onclick="syncData()"><i class="fa fa-sync"></i> Sinkronisasi</button>
-</div>
-</header>
+  <!-- ================= MODAL KEAMANAN PIN ================= -->
+  <div class="modal-overlay" id="pinModal">
+    <div class="modal-box">
+      <div class="lock-icon"><i class="fa-solid fa-shield-halved"></i></div>
+      <h2>Akses Terkunci</h2>
+      <p>Masukkan PIN Admin untuk melanjutkan ke Dashboard Absensi.</p>
+      <input type="password" inputmode="numeric" maxlength="4" class="pin-input" id="pinInput" placeholder="••••" autofocus>
+      <div class="pin-error" id="pinError"></div>
+      <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="verifyPin()">
+        <i class="fa-solid fa-lock-open"></i> Buka Akses
+      </button>
+      <p style="margin-top:1rem; font-size:0.75rem; color:var(--text-muted);">Default PIN: <strong>****</strong></p>
+    </div>
+  </div>
 
-<div class="container">
+  <!-- ================= APLIKASI UTAMA ================= -->
+  <div class="app-content" id="appContent" style="filter: blur(8px); pointer-events: none;">
+    <header class="header">
+      <h1><span>IGI</span> PKBM IGI SUMEDANG</h1>
+      <div class="header-actions">
+        <div class="status-badge" style="font-size:0.8rem; background:rgba(255,255,255,0.15); padding:6px 12px; border-radius:20px; display:flex; align-items:center; gap:6px;">
+          <div style="width:8px; height:8px; background:#34d399; border-radius:50%; animation: pulse 2s infinite;"></div> Offline Ready
+        </div>
+        <button class="btn-lock" onclick="lockSystem()" title="Kunci Layar"><i class="fa-solid fa-lock"></i> Kunci</button>
+      </div>
+    </header>
 
-<div class="card">
-<h3>Input Absensi</h3>
-<form id="formAbsensi">
-<div class="grid">
-<input type="text" id="nama" placeholder="Nama Siswa" required>
-<select id="program" required>
-<option value="">Program</option>
-<option>Paket A</option>
-<option>Paket B</option>
-<option>Paket C</option>
-</select>
-<input type="date" id="tanggal" required>
-<select id="status" required>
-<option value="">Status</option>
-<option>Hadir</option>
-<option>Izin</option>
-<option>Sakit</option>
-<option>Alpa</option>
-</select>
-<input type="text" id="mapel" placeholder="Mata Pelajaran">
-</div>
-<br>
-<button class="btn-primary" type="submit">Simpan</button>
-</form>
-</div>
+    <main class="container">
+      <div class="print-kop">
+        <h2>Yayasan Pendidikan Ikatan Guru Indonesia</h2>
+        <h1>PKBM IGI SUMEDANG</h1>
+        <p>Jl. Prabu Geusan Ulun No. 45, Sumedang, Jawa Barat 45311 | Telp: (0261) 202xxx</p>
+      </div>
 
-<div class="card">
-<h3>Riwayat Absensi</h3>
-<table>
-<thead>
-<tr>
-<th>Nama</th><th>Program</th><th>Tanggal</th><th>Status</th>
-</tr>
-</thead>
-<tbody id="tableBody"></tbody>
-</table>
-</div>
+      <div class="grid-4">
+        <div class="card"><div class="card-label">Total Data Tersimpan</div><div class="card-value" id="statTotal">0</div></div>
+        <div class="card"><div class="card-label">Hadir Hari Ini</div><div class="card-value green" id="statHadir">0</div></div>
+        <div class="card"><div class="card-label">Izin / Sakit Hari Ini</div><div class="card-value yellow" id="statIzinSakit">0</div></div>
+        <div class="card"><div class="card-label">Alpa Hari Ini</div><div class="card-value red" id="statAlpa">0</div></div>
+      </div>
 
-</div>
+      <div class="section">
+        <div class="section-title"><i class="fa-solid fa-chart-line"></i> Tren Kehadiran 4 Minggu Terakhir (Dinamis)</div>
+        <div style="height: 300px;"><canvas id="trendChart"></canvas></div>
+      </div>
 
-<div class="toast" id="toast"></div>
+      <div class="section">
+        <div class="section-title"><i class="fa-solid fa-user-plus"></i> Input Absensi Baru</div>
+        <form id="absensiForm">
+          <div class="form-grid">
+            <div class="form-group"><label>Nama Siswa *</label><input type="text" id="inpNama" required placeholder="Nama Lengkap"></div>
+            <div class="form-group"><label>Program *</label>
+              <select id="inpProgram" required><option value="">Pilih</option><option>Paket A</option><option>Paket B</option><option>Paket C</option></select>
+            </div>
+            <div class="form-group"><label>Mata Pelajaran</label><input type="text" id="inpMapel" placeholder="Opsional"></div>
+            <div class="form-group"><label>Tanggal *</label><input type="date" id="inpTanggal" required></div>
+            <div class="form-group"><label>Status *</label>
+              <select id="inpStatus" required><option value="">Pilih</option><option>Hadir</option><option>Izin</option><option>Sakit</option><option>Alpa</option></select>
+            </div>
+            <div class="form-group full"><label>Catatan</label><textarea id="inpCatatan" rows="2" placeholder="Keterangan..."></textarea></div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Simpan Data</button>
+            <button type="reset" class="btn btn-ghost">Reset Form</button>
+          </div>
+        </form>
+      </div>
 
-<script>
-const API_URL = "YOUR_SCRIPT_URL";
-let localData = [];
+      <div class="section table-section">
+        <div class="table-toolbar">
+          <div class="section-title" style="margin:0"><i class="fa-solid fa-database"></i> Riwayat Absensi</div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn btn-success btn-sm" id="btnExport"><i class="fa-solid fa-file-csv"></i> Ekspor CSV</button>
+            <button class="btn btn-ghost btn-sm" id="btnPrint"><i class="fa-solid fa-print"></i> Cetak PDF</button>
+            <button class="btn btn-danger btn-sm" id="btnClearAll"><i class="fa-solid fa-trash"></i> Hapus Semua</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th style="width:40px">No</th><th>Tanggal</th><th>Nama Siswa</th><th>Program</th><th>Mapel</th><th>Status</th><th>Catatan</th><th class="col-aksi" style="width:80px">Aksi</th></tr></thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
 
-function showToast(msg){
-const t=document.getElementById("toast");
-t.innerText=msg;
-t.style.display="block";
-setTimeout(()=>t.style.display="none",3000);
-}
+  <div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i> <span id="toastMsg"></span></div>
 
-function renderTable(){
-const tbody=document.getElementById("tableBody");
-tbody.innerHTML="";
-localData.forEach(d=>{
-tbody.innerHTML+=`<tr>
-<td>${d.nama}</td>
-<td>${d.program}</td>
-<td>${d.tanggal}</td>
-<td>${d.status}</td>
-</tr>`;
-});
-}
+  <script>
+    // ================= KONFIGURASI =================
+    const STORAGE_KEY = 'pkbm_igi_absensi_data';
+    const ADMIN_PIN = '1234'; // Ganti PIN sesuai kebutuhan
+    let trendChart;
 
-document.getElementById("formAbsensi").addEventListener("submit",async function(e){
-e.preventDefault();
+    document.getElementById('inpTanggal').valueAsDate = new Date();
 
-const nama=document.getElementById("nama").value.trim();
-const tanggal=document.getElementById("tanggal").value;
+    // ================= 1. SISTEM KEAMANAN PIN =================
+    function checkAuth() {
+      if (sessionStorage.getItem('pkbm_unlocked') === 'true') {
+        unlockUI();
+      }
+    }
 
-// CEK DUPLIKAT DI LOCAL
-if(localData.some(d=>d.nama.toLowerCase()==nama.toLowerCase() && d.tanggal==tanggal)){
-showToast("Duplikat di device ini!");
-return;
-}
+    function verifyPin() {
+      const input = document.getElementById('pinInput').value;
+      if (input === ADMIN_PIN) {
+        sessionStorage.setItem('pkbm_unlocked', 'true');
+        unlockUI();
+      } else {
+        document.getElementById('pinError').textContent = 'PIN Salah! Coba lagi.';
+        const box = document.querySelector('.modal-box');
+        box.classList.add('shake');
+        setTimeout(() => box.classList.remove('shake'), 500);
+        document.getElementById('pinInput').value = '';
+      }
+    }
 
-const record={
-id:Date.now().toString(),
-nama:nama,
-program:program.value,
-mapel:mapel.value,
-tanggal:tanggal,
-status:status.value,
-timestamp:Date.now()
-};
+    function unlockUI() {
+      document.getElementById('pinModal').classList.add('hidden');
+      const app = document.getElementById('appContent');
+      app.style.filter = 'none';
+      app.style.pointerEvents = 'auto';
+    }
 
-localData.push(record);
-renderTable();
-showToast("Data tersimpan lokal. Klik Sinkronisasi.");
-this.reset();
-});
+    function lockSystem() {
+      sessionStorage.removeItem('pkbm_unlocked');
+      location.reload(); // Reload untuk memunculkan modal kembali
+    }
 
-async function syncData(){
-for(const record of localData){
-await fetch(API_URL,{
-method:"POST",
-body:JSON.stringify({...record,action:"add"})
-});
-}
-await loadFromServer();
-showToast("Sinkronisasi selesai.");
-}
+    document.getElementById('pinInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') verifyPin();
+    });
 
-async function loadFromServer(){
-const res=await fetch(API_URL+"?action=get");
-const data=await res.json();
-localData=data.slice(1).map(r=>({
-id:r[0],nama:r[1],program:r[2],mapel:r[3],tanggal:r[4],status:r[5],timestamp:r[7]
-}));
-renderTable();
-}
+    // ================= 2. LOCALSTORAGE CORE =================
+    const getData = () => JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    const saveData = (data) => localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 
-loadFromServer();
-</script>
+    // ================= 3. VALIDASI DUPLIKAT =================
+    function isDuplicate(nama, tanggal) {
+      const data = getData();
+      const cleanName = nama.trim().toLowerCase();
+      return data.some(d => d.tanggal === tanggal && d.nama.trim().toLowerCase() === cleanName);
+    }
 
+    // ================= 4. RENDER & STATS =================
+    function renderAll() {
+      const data = getData();
+      renderTable(data);
+      updateStats(data);
+      updateDynamicChart(data);
+    }
+
+    function renderTable(data) {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+      if (!data.length) {
+        tbody.innerHTML = `<tr><td colspan="8" class="empty-state"><i class="fa-regular fa-folder-open" style="font-size:2rem; display:block; margin-bottom:10px;"></i>Belum ada data.</td></tr>`;
+        return;
+      }
+      const sorted = [...data].sort((a, b) => b.timestamp - a.timestamp);
+      sorted.forEach((row, i) => {
+        const tr = document.createElement('tr');
+        const fDate = new Date(row.tanggal).toLocaleDateString('id-ID', {day: '2-digit', month: 'short', year: 'numeric'});
+        tr.innerHTML = `
+          <td>${i + 1}</td><td>${fDate}</td><td><strong>${escapeHtml(row.nama)}</strong></td>
+          <td>${row.program}</td><td>${escapeHtml(row.mapel || '-')}</td>
+          <td><span class="badge badge-${row.status.toLowerCase()}">${row.status}</span></td>
+          <td>${escapeHtml(row.catatan || '-')}</td>
+          <td class="col-aksi"><button class="btn btn-danger btn-sm" onclick="deleteRecord('${row.id}')"><i class="fa-solid fa-trash"></i></button></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function updateStats(data) {
+      const today = new Date().toISOString().split('T')[0];
+      const todayData = data.filter(d => d.tanggal === today);
+      document.getElementById('statTotal').textContent = data.length;
+      document.getElementById('statHadir').textContent = todayData.filter(d => d.status === 'Hadir').length;
+      document.getElementById('statIzinSakit').textContent = todayData.filter(d => d.status === 'Izin' || d.status === 'Sakit').length;
+      document.getElementById('statAlpa').textContent = todayData.filter(d => d.status === 'Alpa').length;
+    }
+
+    // ================= 5. CHART DINAMIS (PAKET A, B, C) =================
+    function updateDynamicChart(data) {
+      const labels = [];
+      const datasetsRaw = { 'Paket A': [], 'Paket B': [], 'Paket C': [] };
+      const today = new Date();
+
+      // Hitung 4 minggu ke belakang
+      for (let i = 3; i >= 0; i--) {
+        const start = new Date(today);
+        start.setDate(today.getDate() - (today.getDay() + 7 * i + 6)); // Senin
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6); // Minggu
+
+        labels.push(`M${4-i} (${start.getDate()}/${start.getMonth()+1})`);
+
+        ['Paket A', 'Paket B', 'Paket C'].forEach(prog => {
+          const weekData = data.filter(d => {
+            const dDate = new Date(d.tanggal);
+            return d.program === prog && dDate >= start && dDate <= end;
+          });
+          if (weekData.length === 0) {
+            datasetsRaw[prog].push(null); // Garis terputus jika tidak ada data
+          } else {
+            const hadir = weekData.filter(d => d.status === 'Hadir').length;
+            datasetsRaw[prog].push(Math.round((hadir / weekData.length) * 100));
+          }
+        });
+      }
+
+      const chartData = {
+        labels: labels,
+        datasets: [
+          { label: 'Paket A', data: datasetsRaw['Paket A'], borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.1)', tension: 0.3, fill: true, spanGaps: true },
+          { label: 'Paket B', data: datasetsRaw['Paket B'], borderColor: '#059669', backgroundColor: 'rgba(5,150,105,0.1)', tension: 0.3, fill: true, spanGaps: true },
+          { label: 'Paket C', data: datasetsRaw['Paket C'], borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)', tension: 0.3, fill: true, spanGaps: true }
+        ]
+      };
+
+      if (trendChart) {
+        trendChart.data = chartData;
+        trendChart.update();
+      } else {
+        trendChart = new Chart(document.getElementById('trendChart'), {
+          type: 'line',
+          data: chartData,
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } } },
+            plugins: { tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y !== null ? ctx.parsed.y + '%' : 'Tidak ada data'}` } } }
+          }
+        });
+      }
+    }
+
+    // ================= 6. EVENT LISTENERS =================
+    document.getElementById('absensiForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const nama = document.getElementById('inpNama').value.trim();
+      const tanggal = document.getElementById('inpTanggal').value;
+
+      // CEK DUPLIKAT
+      if (isDuplicate(nama, tanggal)) {
+        showToast(`Gagal: ${nama} sudah diabsen pada tanggal ini!`, 'error');
+        return;
+      }
+
+      const data = getData();
+      data.push({
+        id: Date.now().toString(36) + Math.random().toString(36).substr(2),
+        nama: nama,
+        program: document.getElementById('inpProgram').value,
+        mapel: document.getElementById('inpMapel').value.trim(),
+        tanggal: tanggal,
+        status: document.getElementById('inpStatus').value,
+        catatan: document.getElementById('inpCatatan').value.trim(),
+        timestamp: Date.now()
+      });
+
+      saveData(data);
+      renderAll();
+      this.reset();
+      document.getElementById('inpTanggal').valueAsDate = new Date();
+      showToast('Data absensi berhasil disimpan!');
+    });
+
+    window.deleteRecord = function(id) {
+      if(!confirm('Hapus data ini?')) return;
+      saveData(getData().filter(d => d.id !== id));
+      renderAll();
+      showToast('Data dihapus.', 'error');
+    }
+
+    document.getElementById('btnClearAll').addEventListener('click', function() {
+      if(!confirm('HAPUS SEMUA DATA? Tindakan ini tidak bisa dibatalkan.')) return;
+      localStorage.removeItem(STORAGE_KEY);
+      renderAll();
+      showToast('Semua data dihapus.', 'error');
+    });
+
+    document.getElementById('btnPrint').addEventListener('click', () => window.print());
+
+    document.getElementById('btnExport').addEventListener('click', function() {
+      const data = getData();
+      if(!data.length) return showToast('Tidak ada data.', 'error');
+      let csv = 'No,Tanggal,Nama,Program,Mapel,Status,Catatan\n';
+      data.forEach((r, i) => csv += `${i+1},"${r.tanggal}","${r.nama}","${r.program}","${r.mapel||'-'}","${r.status}","${r.catatan||'-'}"\n`);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+      a.download = `Absensi_PKBM_IGI_${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      showToast('CSV Berhasil diunduh!');
+    });
+
+    // ================= UTILITAS =================
+    function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.className = `toast ${type}`;
+      document.getElementById('toastMsg').textContent = msg;
+      t.querySelector('i').className = type === 'success' ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-exclamation';
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // ================= INISIALISASI =================
+    checkAuth(); // Cek PIN saat pertama load
+    renderAll();
+  </script>
 </body>
 </html>
